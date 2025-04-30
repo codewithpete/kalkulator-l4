@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator L4 B2B</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --secondary-color: #fff;
+      --background: #f2f2f2;
+      --card-bg: #fff;
+      --text-color: #333;
+      --input-bg: #fafafa;
+      --input-border: #ddd;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: var(--background);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+    h2 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    label {
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: var(--text-color);
+      font-size: 0.95rem;
+    }
+    input[type="text"],
+    input[type="date"] {
+      padding: 10px;
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      background: var(--input-bg);
+      font-size: 1rem;
+      color: var(--text-color);
+      transition: border-color 0.3s;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      color: var(--secondary-color);
+      background: var(--primary-color);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #45a047;
+    }
+    .result {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      background: var(--input-bg);
+      border-radius: 4px;
+      border: 1px solid var(--input-border);
+    }
+    .result p {
+      margin: 12px 0;
+      color: var(--text-color);
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+    .result p span {
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+    .invoice {
+      margin-top: 20px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--input-bg);
+      padding: 15px;
+      border-radius: 4px;
+      border: 1px solid var(--input-border);
+    }
+    .invoice-text {
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+    .copy-btn {
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      background: var(--primary-color);
+      color: var(--secondary-color);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .copy-btn:hover {
+      background: #45a047;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Kalkulator wynagrodzenia - L4</h2>
+    <div class="form-group">
+      <label for="kwota">Kwota miesięczna (brutto):</label>
+      <input type="text" id="kwota" value="20 000" />
+    </div>
+    <div class="form-group">
+      <label for="startDate">Data początkowa L4:</label>
+      <input type="date" id="startDate" />
+    </div>
+    <div class="form-group">
+      <label for="endDate">Data końcowa L4:</label>
+      <input type="date" id="endDate" />
+    </div>
+    <div class="form-group">
+      <label for="procentL4">Procent wypłaty za L4:</label>
+      <input type="text" id="procentL4" value="80" />
+    </div>
+    <button onclick="oblicz()">Oblicz</button>
+    <div class="result" id="wynik"></div>
+    <div class="invoice" id="invoice">
+      <span class="invoice-text" id="invoiceText"></span>
+      <button class="copy-btn" onclick="copyInvoice()">Skopiuj</button>
+    </div>
+  </div>
+
+  <script>
+    // Formatowanie liczb w polskim formacie
+    const fmt = num => num.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Parsowanie tekstu z separatorami
+    const parseNumber = str => {
+      const cleaned = str.replace(/\s/g, '').replace(',', '.');
+      return parseFloat(cleaned) || 0;
+    };
+
+    // Formatowanie inputów podczas wpisywania
+    function formatInput(e) {
+      const value = e.target.value.replace(/\D/g, '');
+      e.target.value = value ? parseInt(value, 10).toLocaleString('pl-PL') : '';
+    }
+
+    document.getElementById('kwota').addEventListener('input', formatInput);
+
+    function oblicz() {
+      const kwotaInput = document.getElementById('kwota').value;
+      const procentInput = document.getElementById('procentL4').value;
+      const kwota = parseNumber(kwotaInput);
+      const start = new Date(document.getElementById('startDate').value);
+      const end = new Date(document.getElementById('endDate').value);
+      const procent = parseNumber(procentInput) / 100;
+
+      if (!kwota || isNaN(start) || isNaN(end) || start > end) {
+        alert('Wprowadź poprawne dane!');
+        return;
+      }
+
+      const MS_DAY = 1000 * 60 * 60 * 24;
+      const dniL4 = Math.round((end - start) / MS_DAY) + 1;
+      const dniMies = 30;
+      const dniPrac = dniMies - dniL4;
+      const dzienna = kwota / dniMies;
+      const sumaL4 = dzienna * dniL4 * procent;
+      const sumaPrac = dzienna * dniPrac;
+      const sumaFin = sumaL4 + sumaPrac;
+
+      const wynikEl = document.getElementById('wynik');
+      wynikEl.style.display = 'block';
+      wynikEl.innerHTML = `
+        <p>🗓️ <span>Liczba dni L4:</span> ${dniL4}</p>
+        <p>💼 <span>Dni pracujące:</span> ${dniPrac}</p>
+        <p>💰 <span>Wynagrodzenie za L4:</span> ${fmt(sumaL4)} zł</p>
+        <p>💰 <span>Wynagrodzenie za dni pracujące:</span> ${fmt(sumaPrac)} zł</p>
+        <p style="margin-top:10px;font-size:1.1rem;">✅ <span>Łącznie:</span> ${fmt(sumaFin)} zł</p>
+      `;
+
+      const invoiceText = `Kwota do wystawienia faktury: ${fmt(sumaFin)} zł`;
+      document.getElementById('invoiceText').textContent = invoiceText;
+      document.getElementById('invoice').style.display = 'flex';
+    }
+
+    function copyInvoice() {
+      const text = document.getElementById('invoiceText').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Skopiowano: ' + text);
+      });
+    }
+  </script>
+</body>
+</html>
